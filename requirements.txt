@@ -1,0 +1,13 @@
+Bottleneck @ file:///opt/concourse/worker/volumes/live/51dc1780-97b5-4c4b-5601-ba5845532b9c/volume/bottleneck_1648028903302/work
+certifi==2021.10.8
+numexpr @ file:///opt/concourse/worker/volumes/live/481d34a7-85d7-43a0-5626-2205c63d75c7/volume/numexpr_1640704244855/work
+numpy @ file:///opt/concourse/worker/volumes/live/1e637f4e-b273-4dea-6753-d6859286a546/volume/numpy_and_numpy_base_1649782774219/work
+packaging @ file:///tmp/build/80754af9/packaging_1637314298585/work
+pandas==1.4.2
+Pillow==9.0.1
+pyparsing @ file:///tmp/build/80754af9/pyparsing_1635766073266/work
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
+pytz==2021.3
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+torch==1.4.0
+torchvision==0.5.0
