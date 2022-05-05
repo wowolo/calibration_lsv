@@ -57,8 +57,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-    @staticmethod
-    def _core_stack(input_width, output_width, variable_width):
+    def _core_stack(self, input_width, output_width, variable_width):
 
         stack = nn.Sequential(
             nn.Linear(input_width, variable_width),
@@ -121,8 +120,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-    @staticmethod
-    def _loss_locvol(option_dict, forward_hedge_detached, x_keys):
+    def _loss_locvol(self, option_dict, forward_hedge_detached, x_keys):
         # need to address all computations with equivalent option - C(K, T)
         # ideas: dictionary with keys (K,T)?
         all_keys = [l[:2] for l in x_keys]
@@ -140,8 +138,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-    @staticmethod
-    def _loss_hedge(option_dict, forward_leverage_detached):
+    def _loss_hedge(self, option_dict, forward_leverage_detached):
         
         loss = nn.MSELoss()(option_dict.values(), forward_leverage_detached)
 
@@ -149,8 +146,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-    @staticmethod
-     def loss(option_dict, forward_hedge_detached, forward_leverage_detached, x_keys):
+     def loss(self, option_dict, forward_hedge_detached, forward_leverage_detached, x_keys):
         
         loss = self._loss_locvol(option_dict, forward_hedge_detached, x_keys) \
             + self._loss_hedge(option_dict, forward_leverage_detached)
