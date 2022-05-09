@@ -10,9 +10,10 @@ class PARAM():
         self.N = 20
         self.maturities = [0.5, 1] 
         self.max_T = max(self.maturities) # time steps: max_T / N & guarantee that maturities are multiple of time steps
+        self.step_size = self.max_T / self.N
 
         self.NN_stacks = 3
-        self.NN_input = 5 # price S, time t, time to maturity T-t, log moneyness log(S/K), Brownian motion increment dB
+        self.NN_input = 4 # price S, time t, time to maturity T-t, log moneyness log(S/K)
         self.NN_varwidth = 30
         self.NN_fixedwidth = 5
         self.NN_output = 2 # leverage, hedge
@@ -109,6 +110,7 @@ class NeuralNetwork(nn.Module):
         # create data for neural networks which will be recursively updated within the network's forward pass
         price = S_0
         hedgepf = 0
+        time = 0
 
         # create computation graphs of leverage and hedge
         leverage, hedge = self._detach_network(detach)
@@ -116,15 +118,20 @@ class NeuralNetwork(nn.Module):
 
         # recursive computations with N discretizations
         for step in range(self.PARAM.N):
-            print('')
+            time = (step + 1) / self.PARAM.N
+            do_comp = int(time <= T) # determines if we continue the recursive computations for the respective option with maturitiy T
+            step_increment = (BMincrement[:, step] * self.PARAM.step_size)
             
-            if 
-        
+            dS = leverage(price, time, T-time, torch.log(price / K)) * price * step_increment
+            price += do_comp * dS
+            
+            new_hedge = hedge(price, time, T-time, torch.log(price / K)) * step_increment
+            hedgepf += do_comp * new_hedge
+            
+        payoff = ((price - K) + torch.abs(price - K)) / 2
+        output = payoff - hedgepf # option_payoff - hedge_portfolio
 
-
-
-
-        return 1
+        return output
 
 
 
