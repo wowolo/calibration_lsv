@@ -87,6 +87,7 @@ class NeuralNetwork(nn.Module):
         return leverage, hedge
 
 
+# TODO: change from x_dict to new data format!
     
     def forward(self, x_dict, detach=None):
         """ x_dict: {(K,T,0): [S_0, K, T, [BMincrement]], ..., (K,T,len(x)): [S_0, K, T, N, [BMincrement]]}
@@ -160,7 +161,7 @@ class NeuralNetwork(nn.Module):
 
 
 
-     def loss(self, option_dict, x_dict):
+    def loss(self, option_dict, x_dict):
         
         forward_hedge_detached = self.forward(x_dict, 'hedge')
         forward_leverage_detached = self.forward(x_dict, 'leverage')
@@ -172,7 +173,7 @@ class NeuralNetwork(nn.Module):
 
         return loss
 
-        
+
 
     def train(self, option_dict, x_dict):
         # might want to implement with batch size later...
@@ -188,10 +189,76 @@ class NeuralNetwork(nn.Module):
 
 
 
-    def test(self):
+    # def test(self):
 
 
 # used to generate BM increments for input data
 def BMincrement(PARAM):
-    BMincr = torch.normal(0, 1) 
-    return BMincr
+    return torch.normal(0, 1, size=(PARAM.N,)) 
+
+
+# create adapted "data structures"
+class LoadData(torch.utils.data.Dataset):
+
+    def __init__(self, list_IDs, Xdata, ydata):
+        self.Xdata = Xdata # dictionary with IDs as keys and values as lists
+        self.ydata = ydata # dictionary with IDs as keys and values as float
+        self.list_IDs = list_IDs # list of IDs
+
+    def __len__(self):
+        return len(self.list_IDs)
+
+    def __getitem__(self, index):
+        # Select sample
+        ID = self.list_IDs[index]
+
+        # Load data and get label
+        X = self.Xdata[ID]
+        y = self.ydata[ID]
+
+        return X, y
+
+# Data
+option_price = {'0': 0.20042534,
+            '1': 0.23559685,
+            '2': 0.16312157,
+            '3': 0.20771958,
+            '4': 0.13154241,
+            '5': 0.18236567}
+# S, K, T
+option_data = {'0': [1, 0.9, 0.5],
+            '1': [1, 0.9, 1.0],
+            '2': [1, 1.0, 0.5],
+            '3': [1, 1.0, 1.0],
+            '4': [1, 1.1, 0.5],
+            '5': [1, 1.1, 1.0]}
+
+
+mc_paths = 1
+len_data = len(option_price)
+
+list_IDs = []
+ydata = {}
+Xdata = {}
+
+
+for n_mc in range(mc_paths):
+    mc_path = BMincrement(PARAM())
+    start_ID = n_mc * len_data
+    for i, id in enumerate(option_price):
+        list_IDs += ['ID_' + str(start_ID + i)]
+        ydata['ID_' + str(start_ID + i)] = option_price[id]
+        Xdata['ID_' + str(start_ID + i)] = option_data[id] + [mc_path]
+        
+
+
+
+params = {'batch_size': 64,
+          'shuffle': True,
+          'num_workers': 6}
+          
+training_set = LoadData(list_IDs, Xdata, ydata)
+training_generator = torch.utils.data.DataLoader(training_set, **params)
+
+# validation_set = LoadData(partition['validation'], labels)
+# validation_generator = torch.utils.data.DataLoader(validation_set, **params)
