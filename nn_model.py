@@ -96,7 +96,6 @@ class NeuralNetwork(nn.Module):
                 BMincrement: List of N independent realizations of Gaussian(0, 1)
         """
         
-        x_keys = list(x_dict.keys())
         x = list(x_dict.values())
         S_0, K, T, BMincrement = x[:, 0], x[:, 1], x[:, 2], x[:, 3] 
 
@@ -161,14 +160,19 @@ class NeuralNetwork(nn.Module):
 
 
 
-     def loss(self, option_dict, forward_hedge_detached, forward_leverage_detached, x_keys):
+     def loss(self, option_dict, x_dict):
         
+        forward_hedge_detached = self.forward(x_dict, 'hedge')
+        forward_leverage_detached = self.forward(x_dict, 'leverage')
+
+        x_keys = x_dict.keys()
+
         loss = self._loss_locvol(option_dict, forward_hedge_detached, x_keys) \
             + self._loss_hedge(option_dict, forward_leverage_detached)
 
         return loss
 
-
+        
 
     def train(self, option_dict, x_dict):
         # might want to implement with batch size later...
@@ -176,7 +180,7 @@ class NeuralNetwork(nn.Module):
         # batch_size = 64
 
         # in for loop
-        loss = ...
+        loss = self.loss(option_dict, x_dict)
 
         self.optimizer.zero_grad()
         loss.backward()
