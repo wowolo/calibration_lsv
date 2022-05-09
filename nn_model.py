@@ -8,10 +8,11 @@ class PARAM():
     def __init__(self) -> None:
 
         self.N = 20
-        self.max_T = 1 # maximal maturity -> time steps: max_T/N
+        self.maturities = [0.5, 1] 
+        self.max_T = max(self.maturities) # time steps: max_T / N & guarantee that maturities are multiple of time steps
 
         self.NN_stacks = 3
-        self.NN_input = 4 # price S, time t, time to maturity T-t, log moneyness log(S/K), Brownian motion increment dB
+        self.NN_input = 5 # price S, time t, time to maturity T-t, log moneyness log(S/K), Brownian motion increment dB
         self.NN_varwidth = 30
         self.NN_fixedwidth = 5
         self.NN_output = 2 # leverage, hedge
@@ -33,11 +34,11 @@ class NeuralNetwork(nn.Module):
 
         for i in range(PARAM.NN_stacks):
 
-            if i == 0: 
+            if i == 0: # first stack
                 input_width = PARAM.NN_input
                 output_width = PARAM.NN_fixedwidth
 
-            elif i == PARAM.NN_stacks - 1:
+            elif i == PARAM.NN_stacks - 1: # last stack
                 input_width = PARAM.NN_fixedwidth
                 output_width = PARAM.NN_output
 
@@ -98,25 +99,32 @@ class NeuralNetwork(nn.Module):
         x = list(x_dict.values())
         S_0, K, T, BMincrement = x[:, 0], x[:, 1], x[:, 2], x[:, 3] 
 
+
         # data check: check that N BMincrements are given
         if len(x[0][-1]) != self.PARAM.N:
             return RuntimeError('The number of given Brownian motion increments ({}) does not match with \
                 the number of discretization steps ({}).'.format(len(x[0][-1]), self.PARAM.N))
 
 
+        # create data for neural networks which will be recursively updated within the network's forward pass
+        price = S_0
+        hedgepf = 0
+
+        # create computation graphs of leverage and hedge
         leverage, hedge = self._detach_network(detach)
 
 
         # recursive computations with N discretizations
         for step in range(self.PARAM.N):
+            print('')
             
-
+            if 
         
 
 
 
 
-        return output
+        return 1
 
 
 
@@ -158,7 +166,14 @@ class NeuralNetwork(nn.Module):
     def train(self, option_dict, x_dict):
         # might want to implement with batch size later...
         # use loss with self.optimizer.step() and loss.backward()
-        loss_
+        # batch_size = 64
+
+        # in for loop
+        loss = ...
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
 
 
