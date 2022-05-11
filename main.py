@@ -1,4 +1,5 @@
 # main file for executing program
+import torch
 from create_data import create_data
 from nn_model import NeuralNetwork
 
@@ -36,9 +37,9 @@ option_data = {0: [1, 0.9, 0.5],
             4: [1, 1.1, 0.5],
             5: [1, 1.1, 1.0]}
 
-mc_paths = 2
+mc_paths = 300
 
 Xdata, ydata = create_data(option_price, option_data, mc_paths, param)
 
 model = NeuralNetwork(param)
-model.train(Xdata, ydata, epochs=1, batch_size=4)
+model.train(Xdata, ydata, epochs=4, batch_size=32)

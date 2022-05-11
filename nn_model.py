@@ -58,14 +58,14 @@ class NeuralNetwork(nn.Module):
     def _detach_network(self, detach):
 
         if detach == 'leverage':
-            leverage = lambda x: self.neural_network(x).detach()[0] # ouput 0 of NN
-            hedge = lambda x: self.neural_network(x)[1]
+            leverage = lambda x: self.neural_network(x).detach()[:, [0]] # ouput 0 of NN
+            hedge = lambda x: self.neural_network(x)[:, [1]]
         elif detach == 'hedge':
-            leverage = lambda x: self.neural_network(x)[0] # ouput 0 of NN
-            hedge = lambda x: self.neural_network(x).detach()[1]
+            leverage = lambda x: self.neural_network(x)[:, [0]] # ouput 0 of NN
+            hedge = lambda x: self.neural_network(x).detach()[:, [1]]
         else:
-            leverage = lambda x: self.neural_network(x)[0] # ouput 0 of NN
-            hedge = lambda x: self.neural_network(x)[1]
+            leverage = lambda x: self.neural_network(x)[:, [0]] # ouput 0 of NN
+            hedge = lambda x: self.neural_network(x)[:, [1]]
 
         return leverage, hedge
 
@@ -78,7 +78,7 @@ class NeuralNetwork(nn.Module):
         'leverage' or 'hedge', else no detachment is made.
         """
         
-        X = nn_util.df_to_tensor(X)
+        X = nn_util.to_tensor(X)
         S_0, K, T, BMincrements = nn_util.extract_features(X)
 
         # data check: check that N BMincrements are given
@@ -88,23 +88,24 @@ class NeuralNetwork(nn.Module):
 
         # create data for neural networks which will be recursively updated within the network's forward pass
         price = S_0
-        hedgepf = 0
-        time = 0
+        hedgepf = torch.zeros_like(S_0)
 
         # create computation graphs of leverage and hedge
         leverage, hedge = self._detach_network(detach)
 
         # recursive computations with N discretizations
         for step in range(self.PARAM.N):
-            time = (step + 1) / self.PARAM.N
-            do_comp = int(time <= T) # determines if we continue the recursive computations for the respective option with maturitiy T
-            step_increment = (BMincrements[:, step] * self.PARAM.step_size)
+            time = torch.ones_like(S_0) * step / self.PARAM.N
+            do_comp = (time <= T) # determines if we continue the recursive computations for the respective option with maturitiy T
+            step_increment = (BMincrements[:, [step]] * self.PARAM.step_size)
             
-            dS = leverage(price, time, T-time, torch.log(price / K)) * price * step_increment
-            price += do_comp * dS
+            nn_input = torch.cat((price, time, T-time, torch.log(price / K)), dim=1)
+
+            dS = leverage(nn_input) * price * step_increment
+            price = price + do_comp * dS
             
-            new_hedge = hedge(price, time, T-time, torch.log(price / K)) * step_increment
-            hedgepf += do_comp * new_hedge
+            new_hedge = hedge(nn_input) * dS
+            hedgepf = hedgepf + do_comp * new_hedge
             
         payoff = ((price - K) + torch.abs(price - K)) / 2
         output = payoff - hedgepf # option_payoff - hedge_portfolio
@@ -131,11 +132,15 @@ class NeuralNetwork(nn.Module):
             epochs = kwargs.pop('epochs')
         else:
             epochs = 1
+        
+        self.neural_network = self.neural_network.double()
+        torch.autograd.set_detect_anomaly(True) # temporary
 
-        training_set = LoadData(Xdata, ydata)
-        training_generator = nn_util.DataGenerator(Xdata, ydata)
+        training_generator = nn_util.DataGenerator(Xdata, ydata, **kwargs)
+
         # in for loop
-        for i in range(epochs):
+        for epoch in range(epochs):
+            print('Epoch: ', epoch)
             for X, y in training_generator:
                 loss = self.loss(X, y)
 

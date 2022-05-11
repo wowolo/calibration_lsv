@@ -1,11 +1,15 @@
+import pandas as pd
 import torch
+import nn_util
 
 
 
 
-def df_to_tensor(df):
-
-    X = torch.tensor(df.values, dtype=torch.float64)
+def to_tensor(df):
+    if isinstance(df, pd.DataFrame):
+        X = torch.tensor(df.values, dtype=torch.float64)
+    else:
+        X = df
     
     return X
 
@@ -14,9 +18,9 @@ def df_to_tensor(df):
 
 def extract_features(X):
 
-    S_0 = X[:, 0]
-    K = X[:, 1]
-    T = X[:, 2]
+    S_0 = X[:, [0]]
+    K = X[:, [1]]
+    T = X[:, [2]]
     BMincrements = X[:, 3:]
 
     return S_0, K, T, BMincrements
@@ -27,8 +31,8 @@ def extract_features(X):
 class Dataset(torch.utils.data.Dataset):
 
     def __init__(self, Xdata, ydata):
-        self.Xdata = df_to_tensor(Xdata.values)
-        self.ydata = df_to_tensor(ydata)
+        self.Xdata = to_tensor(Xdata)
+        self.ydata = to_tensor(ydata)
 
 
 
@@ -59,24 +63,27 @@ def DataGenerator(Xdata, ydata, **kwargs):
 
 
 def loss_locvol(pred, y, X):
-   
-    helper = X.loc[:,['K', 'T']].reset_index().set_index(['K', 'T']) # has IDs as values
-    unique_keys = helper.index.unique()
+
+    _, K, T, _ = nn_util.extract_features(X)
+
+    all_K_T = torch.cat((K, T), dim=1)
+    unique_K_T = torch.unique(all_K_T, dim=0)
 
     loss = 0
 
-    for key in unique_keys:
-        ind = list(helper.index.isin([key]))
-        loss += (torch.sum(y.values()[ind] - pred[ind])/ len(ind)) ** 2
-    
-    loss /= len(unique_keys) # average over number of samples
+    for K_T in unique_K_T:
+        ind = [torch.equal(temp, K_T) for temp in all_K_T]
+        loss = loss + (torch.sum(pred[ind] - y[ind]) / len(ind)) ** 2
+
+    loss = loss / len(unique_K_T) # average over number of samples
 
     return loss
 
 
 
+
 def loss_hedge(pred, y):
     
-    loss = torch.nn.MSELoss()(y.values(), pred)
+    loss = torch.nn.MSELoss()(pred, y)
 
     return loss
