@@ -1,3 +1,8 @@
+# ignore all ipython stuff
+
 # ignore the data file and venv
 thesis_pip/
 data/
+
+# ignore foo
+foo.py
