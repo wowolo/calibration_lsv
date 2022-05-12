@@ -11,11 +11,12 @@ class PARAM():
         self.maturities = [0.5, 1] 
         self.max_T = max(self.maturities) # time steps: max_T / N & guarantee that maturities are multiple of time steps
         self.step_size = self.max_T / self.N
+        self.mc_paths = 300
 
-        self.NN_stacks = 3
+        self.NN_stacks = 14
         self.NN_input = 4 # price S, time t, time to maturity T-t, log moneyness log(S/K)
-        self.NN_varwidth = 30
-        self.NN_fixedwidth = 5
+        self.NN_varwidth = 45
+        self.NN_fixedwidth = 15
         self.NN_output = 2 # leverage, hedge
 
         # data features?
@@ -39,7 +40,7 @@ option_data = {0: [1, 0.9, 0.5],
 
 mc_paths = 300
 
-Xdata, ydata = create_data(option_price, option_data, mc_paths, param)
+Xdata, ydata = create_data(option_price, option_data, param)
 
 model = NeuralNetwork(param)
 model.train(Xdata, ydata, epochs=4, batch_size=32)

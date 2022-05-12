@@ -134,7 +134,6 @@ class NeuralNetwork(nn.Module):
             epochs = 1
         
         self.neural_network = self.neural_network.double()
-        torch.autograd.set_detect_anomaly(True) # temporary
 
         training_generator = nn_util.DataGenerator(Xdata, ydata, **kwargs)
 
