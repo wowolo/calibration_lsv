@@ -11,7 +11,7 @@ def BMincrements(N):
 
 
 
-def create_data(option_price, option_data, mc_paths, param):
+def create_data(option_price, option_data, param):
     """
     option_price - dict: integer keys (matching with option_data keys) and option prices as values
     option_data - dict: integer keys (matching with option_price keys) and values of the format
@@ -21,13 +21,13 @@ def create_data(option_price, option_data, mc_paths, param):
     """
     len_data = len(option_price)
 
-    col_labels = ['ID_' + str(i) for i in range(len_data * mc_paths)]
+    col_labels = ['ID_' + str(i) for i in range(len_data * param.mc_paths)]
     incr_labels = ['incr_' + str(i) for i in range(param.N)]
     Xdata = pd.DataFrame(index=['S_0', 'K', 'T'] + incr_labels, columns=col_labels)
     ydata = pd.DataFrame(index=['Option Price'], columns=col_labels)    
 
 
-    for n_mc in range(mc_paths):
+    for n_mc in range(param.mc_paths):
         mc_path = BMincrements(param.N)
         start_ID = n_mc * len_data
         for i, id in enumerate(option_price):
