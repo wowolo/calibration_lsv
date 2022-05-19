@@ -1,4 +1,5 @@
 # ignore all ipython stuff
+__pychace__/
 
 # ignore the data file and venv
 thesis_pip/
